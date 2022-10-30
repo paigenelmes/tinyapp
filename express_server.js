@@ -22,8 +22,8 @@ const generateRandomString = function() {
 
 //URL Database
 const urlDatabase = {
-  "b2xVn2": {id:"b2xVn2", longURL: "http://www.lighthouselabs.ca"},
-  "9sm5xK": {id: "9sm5xK", longURL: "http://www.google.com"}
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca"},
+  "9sm5xK": {longURL: "http://www.google.com"}
 };
 
 //Displays a message that the server is listening when server is running
@@ -31,7 +31,7 @@ app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}!`);
 });
 
-//Returning JSONs
+//Get response as JSON
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -60,10 +60,8 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = {
-    id: shortURL,
     longURL: longURL
   };
-  console.log("Full request body:", req.body); // Log the POST request body to the console
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -71,7 +69,12 @@ app.post("/urls", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
-  console.log("URL Database", urlDatabase);
-  console.log("Long URL", longURL);
   res.redirect(longURL);
+});
+
+//Delete URL when delete button is pressed, then redirect back to /urls page
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
 });
