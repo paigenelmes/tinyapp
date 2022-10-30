@@ -78,3 +78,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
+
+//Edit URL when edit button is pressed, then redirect back to /urls page
+app.post("/urls/:shortURL/edit", (req, res) => {
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL].longURL = req.body.newURL;
+  res.redirect("/urls");
+});
