@@ -1,10 +1,13 @@
-//Setting up express & port
+//Setting up requirements & port
 const express = require("express");
+const cookieParser = require('cookie-parser');
+const { cookie } = require("express/lib/response");
 const app = express();
 const PORT = 8080;
 
 //Setting up middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 //Setting view engine to EJS
@@ -38,7 +41,10 @@ app.get("/urls.json", (req, res) => {
 
 //Rendering the template vars into main URL page
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase};
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -51,7 +57,9 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL};
+    longURL: urlDatabase[req.params.id].longURL,
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -83,5 +91,19 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL].longURL = req.body.newURL;
+  res.redirect("/urls");
+});
+
+//After user logs in, set a username cookie and redirect back to /urls
+app.post("/urls/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username);
+  res.redirect("/urls");
+});
+
+//After user logs out, clear username cookie and redirect back to /urls
+app.post("/urls/logout", (req, res) => {
+  const username = req.body.username;
+  res.clearCookie("username", username);
   res.redirect("/urls");
 });
