@@ -4,19 +4,21 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
-//const { cookie } = require("express/lib/response"); //do i need this? where did it come from???
 const app = express();
 const PORT = 8080;
 
 //////////////////////////////
 //////// MIDDLEWARE /////////
 ////////////////////////////
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-
-//Setting view engine to EJS
 app.set("view engine", "ejs");
+
+///////////////////////////////////
+//////// FUNCTIONS & DATA ////////
+/////////////////////////////////
 
 //Generate random string function
 const generateRandomString = function() {
@@ -28,15 +30,30 @@ const generateRandomString = function() {
   return randomStr;
 };
 
-//URL Database
-const urlDatabase = {
-  "b2xVn2": {longURL: "http://www.lighthouselabs.ca"},
-  "9sm5xK": {longURL: "http://www.google.com"}
+//Users Database
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
 };
 
-////////////////////////////
-//////// ROUTES ///////////
-///////////////////////////
+//URL Database
+const urlDatabase = {
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca"},
+  "9sm5xK": { longURL: "http://www.google.com"}
+};
+
+
+/////////////////////////////////////////////////////
+//////// MAIN URLS PAGE & CREATING NEW URLS ////////
+///////////////////////////////////////////////////
 
 //Displays a message that the server is listening when server is running
 app.listen(PORT, () => {
@@ -50,24 +67,34 @@ app.get("/urls.json", (req, res) => {
 
 //Rendering the template vars into main URL page
 app.get("/urls", (req, res) => {
+  const id = req.cookies["userID"];
+  const user = users[id];
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user
   };
   res.render("urls_index", templateVars);
 });
 
 //Rendering new URLs
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const id = req.cookies["userID"];
+  const user = users[id];
+  const templateVars = {
+    id: req.params.id,
+    user
+  };
+  res.render("urls_new", templateVars);
 });
 
 //Rendering template vars into /urls/:id page
 app.get("/urls/:id", (req, res) => {
+  const id = req.cookies["userID"];
+  const user = users[id];
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    username: req.cookies["username"]
+    user
   };
   res.render("urls_show", templateVars);
 });
@@ -89,6 +116,10 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+//////////////////////////////////////////
+//////// EDITING & DELETING URLS ////////
+////////////////////////////////////////
+
 //Delete URL when delete button is pressed, then redirect back to /urls page
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -109,15 +140,15 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 //After user logs in, set a username cookie and redirect back to /urls
 app.post("/urls/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
+  const userID = req.body.id;
+  res.cookie("userID", userID);
   res.redirect("/urls");
 });
 
 //After user logs out, clear username cookie and redirect back to /urls
 app.post("/urls/logout", (req, res) => {
-  const username = req.body.username;
-  res.clearCookie("username", username);
+  const userID = req.body.id;
+  res.clearCookie("userID", userID);
   res.redirect("/urls");
 });
 
@@ -125,7 +156,23 @@ app.post("/urls/logout", (req, res) => {
 //////// USER REGISTRATION ///////
 /////////////////////////////////
 
-//Rendering the user registration page
+//Render the user registration page
 app.get("/register", (req, res) => {
-  res.render("register", {user: null});
+  res.render("register", { user: null });
+});
+
+//Save new users to User Database, generate a userID, set cookies & redirect to main urls page
+app.post("/register", (req, res) => {
+  const userID = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+  users[userID] = {
+    id: userID,
+    email,
+    password
+  };
+
+  res.cookie("userID", userID);
+  res.redirect("/urls");
 });
