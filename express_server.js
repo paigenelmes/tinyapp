@@ -1,11 +1,16 @@
-//Setting up requirements & port
+//////////////////////////////
+//// REQUIREMENTS & PORT ////
+////////////////////////////
+
 const express = require("express");
 const cookieParser = require('cookie-parser');
-const { cookie } = require("express/lib/response");
+//const { cookie } = require("express/lib/response"); //do i need this? where did it come from???
 const app = express();
 const PORT = 8080;
 
-//Setting up middleware
+//////////////////////////////
+//////// MIDDLEWARE /////////
+////////////////////////////
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -28,6 +33,10 @@ const urlDatabase = {
   "b2xVn2": {longURL: "http://www.lighthouselabs.ca"},
   "9sm5xK": {longURL: "http://www.google.com"}
 };
+
+////////////////////////////
+//////// ROUTES ///////////
+///////////////////////////
 
 //Displays a message that the server is listening when server is running
 app.listen(PORT, () => {
@@ -94,6 +103,10 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect("/urls");
 });
 
+///////////////////////////////////
+//////// USER LOG IN & OUT ///////
+/////////////////////////////////
+
 //After user logs in, set a username cookie and redirect back to /urls
 app.post("/urls/login", (req, res) => {
   const username = req.body.username;
@@ -106,4 +119,13 @@ app.post("/urls/logout", (req, res) => {
   const username = req.body.username;
   res.clearCookie("username", username);
   res.redirect("/urls");
+});
+
+///////////////////////////////////
+//////// USER REGISTRATION ///////
+/////////////////////////////////
+
+//Rendering the user registration page
+app.get("/register", (req, res) => {
+  res.render("register", {user: null});
 });
