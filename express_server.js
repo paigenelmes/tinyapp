@@ -151,6 +151,17 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 //////// USER LOG IN & OUT ///////
 /////////////////////////////////
 
+//Rendering the template vars into the login page
+app.get("/login", (req, res) => {
+  const id = req.cookies["userID"];
+  const user = users[id];
+  const templateVars = {
+    urls: urlDatabase,
+    user
+  };
+  res.render("login", templateVars);
+});
+
 //After user logs in, set a username cookie and redirect back to /urls
 app.post("/urls/login", (req, res) => {
   const userID = req.body.id;
