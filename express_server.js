@@ -16,19 +16,9 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
-///////////////////////////////////
-//////// FUNCTIONS & DATA ////////
-/////////////////////////////////
-
-//Generate random string function
-const generateRandomString = function() {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let randomStr = "";
-  for (let i = 6; i > 0; i--) {
-    randomStr += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return randomStr;
-};
+////////////////////////////
+//////// DATABASES ////////
+//////////////////////////
 
 //Users Database
 const users = {
@@ -50,6 +40,29 @@ const urlDatabase = {
   "9sm5xK": { longURL: "http://www.google.com"}
 };
 
+///////////////////////////////////
+//////// HELPER FUNCTIONS ////////
+/////////////////////////////////
+
+//Generate random 6-character string function
+const generateRandomString = function() {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let randomStr = "";
+  for (let i = 6; i > 0; i--) {
+    randomStr += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return randomStr;
+};
+
+//Get user by email function: If email is found, return user object. If not, return null
+const getUserByEmail = function(email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user];
+    }
+  }
+  return null;
+};
 
 /////////////////////////////////////////////////////
 //////// MAIN URLS PAGE & CREATING NEW URLS ////////
@@ -161,11 +174,18 @@ app.get("/register", (req, res) => {
   res.render("register", { user: null });
 });
 
-//Save new users to User Database, generate a userID, set cookies & redirect to main urls page
+/* Save new users to User Database, generate a userID, set cookies & redirect to main urls page
+Handle errors: status code 400 if email & password are empty, or if email is already in user object */
 app.post("/register", (req, res) => {
   const userID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+
+  if (!email || !password) {
+    res.status(400).send("Error: Please enter an email address and a password.");
+  } else if (getUserByEmail(email)) {
+    res.status(400).send(`Error: A user with the email address ${email} already exists.`);
+  }
 
   users[userID] = {
     id: userID,
