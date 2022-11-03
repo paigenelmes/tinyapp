@@ -162,27 +162,55 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-//After user logs in, set a username cookie and redirect back to /urls
-app.post("/urls/login", (req, res) => {
+/*After user logs in, set a userID cookie and redirect back to /urls
+Return status code 400 if email & password are empty or if user email doesn't exist
+Return status code 400 if email does exist but the password doesn't match the one in the database*/
+
+app.post("/login", (req, res) => {
   const userID = req.body.id;
+  const email = req.body.email;
+  const password = req.body.password;
+  const existingUser = getUserByEmail(email);
+  const existingPass = existingUser.password;
+
+  if (!email || !password) {
+    res.status(400).send("Error: Please enter an email address and a password.");
+  } else if (!existingUser) {
+    res.status(400).send(`Error: A user with the email address ${email} does not exist. Try again.`);
+  } else if (existingUser && (password !== existingPass)) {
+    res.status(400).send("Error: Incorrect password. Try again.");
+  }
+
+  users[userID] = {
+    id: userID,
+    email,
+    password
+  };
+
   res.cookie("userID", userID);
   res.redirect("/urls");
 });
 
-//After user logs out, clear username cookie and redirect back to /urls
-app.post("/urls/logout", (req, res) => {
+//After user logs out, clear userID cookie and redirect back to /urls
+app.post("/logout", (req, res) => {
   const userID = req.body.id;
   res.clearCookie("userID", userID);
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 ///////////////////////////////////
 //////// USER REGISTRATION ///////
 /////////////////////////////////
 
-//Render the user registration page
+//Render the templates vars to the user registration page
 app.get("/register", (req, res) => {
-  res.render("register", { user: null });
+  const id = req.cookies["userID"];
+  const user = users[id];
+  const templateVars = {
+    urls: urlDatabase,
+    user
+  };
+  res.render("register", templateVars);
 });
 
 /* Save new users to User Database, generate a userID, set cookies & redirect to main urls page
