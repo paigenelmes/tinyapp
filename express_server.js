@@ -164,30 +164,26 @@ app.get("/login", (req, res) => {
 
 /*After user logs in, set a userID cookie and redirect back to /urls
 Return status code 400 if email & password are empty or if user email doesn't exist
+Only check for for the existing password if the return value of function call is not null/undefined
 Return status code 400 if email does exist but the password doesn't match the one in the database*/
 
 app.post("/login", (req, res) => {
-  const userID = req.body.id;
   const email = req.body.email;
   const password = req.body.password;
-  const existingUser = getUserByEmail(email);
-  const existingPass = existingUser.password;
-
   if (!email || !password) {
-    res.status(400).send("Error: Please enter an email address and a password.");
-  } else if (!existingUser) {
-    res.status(400).send(`Error: A user with the email address ${email} does not exist. Try again.`);
-  } else if (existingUser && (password !== existingPass)) {
-    res.status(400).send("Error: Incorrect password. Try again.");
+    return res.status(400).send("Error: Please enter an email address and a password.");
+  }
+  const existingUser = getUserByEmail(email);
+
+  if (!existingUser) {
+    return res.status(400).send(`Error: A user with the email address ${email} does not exist. Try again.`);
+  }
+  const existingPass = existingUser.password;
+  if (password !== existingPass) {
+    return res.status(400).send("Error: Incorrect password. Try again.");
   }
 
-  users[userID] = {
-    id: userID,
-    email,
-    password
-  };
-
-  res.cookie("userID", userID);
+  res.cookie("userID", existingUser.id);
   res.redirect("/urls");
 });
 
