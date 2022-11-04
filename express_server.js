@@ -4,6 +4,7 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
 
@@ -13,6 +14,10 @@ const PORT = 8080;
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: "43337c74-80d2-4dbb-9d64-d9088db11050"
+}));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -23,21 +28,21 @@ app.set("view engine", "ejs");
 //Users Database
 const users = {
   userRandomID: {
-    id: "userRandomID",
+    id: "Rxu4p7",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
-    id: "user2RandomID",
+    id: "6M0cIQ",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "abc",
   },
 };
 
 //URL Database
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca"},
-  "9sm5xK": { longURL: "http://www.google.com"}
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "Rxu4p7"},
+  "9sm5xK": {longURL: "http://www.google.com", userID: "Rxu4p7"}
 };
 
 ///////////////////////////////////
@@ -78,23 +83,26 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//Rendering the template vars into main URL page
+/*Rendering the template vars into main URL page
+If user isn't logged in, display an error message...NOT IMPLEMENTED YET, need help*/
 app.get("/urls", (req, res) => {
-  const id = req.cookies["userID"];
+
+  const id = req.session["user_ID"];
   const user = users[id];
   const templateVars = {
     urls: urlDatabase,
     user
   };
   res.render("urls_index", templateVars);
+
 });
 
 //Rendering new URLs. If not logged in, redirect to login page
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session["user_ID"]) {
     res.redirect("/login");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["user_ID"];
     const user = users[id];
     const templateVars = {
       id: req.params.id,
@@ -108,7 +116,7 @@ app.get("/urls/new", (req, res) => {
 If the Short URL ID isn't in the database, display an error*/
 app.get("/urls/:id", (req, res) => {
   if (urlDatabase[req.params.id]) {
-    const id = req.cookies["userID"];
+    const id = req.session["user_ID"];
     const user = users[id];
     const templateVars = {
       id: req.params.id,
@@ -119,19 +127,20 @@ app.get("/urls/:id", (req, res) => {
   } else {
     res.status(400).send("Error: Sorry, this URL does not exist. Try again.");
   }
-  
 });
 
 /*Save new URL to URL Database & redirect to short URL page. Generate URL w/ helper function
 /If user is not logged in, display an error message*/
 app.post("/urls", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session["user_ID"]) {
     res.status(400).send("Error: Sorry, only registered users can create new URLs. Please login or register.");
   } else {
     const shortURL = generateRandomString();
     const longURL = req.body.longURL;
+    const userID = req.session["user_ID"];
     urlDatabase[shortURL] = {
-      longURL: longURL
+      longURL,
+      userID,
     };
     res.redirect(`/urls/${shortURL}`);
   }
@@ -169,10 +178,10 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 //Rendering the template vars into the login page
 //If the user is logged in already, redirect to urls page
 app.get("/login", (req, res) => {
-  if (req.cookies["userID"]) {
+  if (req.session["user_ID"]) {
     res.redirect("/urls");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["user_ID"];
     const user = users[id];
     const templateVars = {
       urls: urlDatabase,
@@ -201,14 +210,14 @@ app.post("/login", (req, res) => {
   if (password !== existingPass) {
     return res.status(400).send("Error: Incorrect password. Try again.");
   }
-  res.cookie("userID", existingUser.id);
+  res.cookie("user_ID", existingUser.id);
   res.redirect("/urls");
 });
 
 //After user logs out, clear userID cookie and redirect back to /urls
 app.post("/logout", (req, res) => {
   const userID = req.body.id;
-  res.clearCookie("userID", userID);
+  res.clearCookie("user_ID", userID);
   res.redirect("/login");
 });
 
@@ -218,10 +227,10 @@ app.post("/logout", (req, res) => {
 
 //Render the templates vars to the user registration page
 app.get("/register", (req, res) => {
-  if (req.cookies["userID"]) {
+  if (req.session["user_ID"]) {
     res.redirect("/urls");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["user_ID"];
     const user = users[id];
     const templateVars = {
       urls: urlDatabase,
@@ -250,6 +259,6 @@ app.post("/register", (req, res) => {
     password
   };
 
-  res.cookie("userID", userID);
+  res.cookie("user_ID", userID);
   res.redirect("/urls");
 });
