@@ -8,15 +8,19 @@ NOTE: This project was created for learning purposes. It is <strong>not</strong>
 ## Final Product
 
 !["Create short URLs in seconds with TinyApp."](https://github.com/paigenelmes/tinyapp/blob/main/docs/tinyapp-create-URL.png?raw=true)
+_Create short URLs in seconds with TinyApp!_
 
 !["To get started, create a free account. Registration is a fast and simple."](https://github.com/paigenelmes/tinyapp/blob/main/docs/tinyapp-register.png?raw=true)
+_To get started, create a free account. Registration is a fast and simple._
 
 !["Simply log into your account and TinyApp stores all your short URLs in one place."](https://github.com/paigenelmes/tinyapp/blob/main/docs/tinyapp-my-URLs.png?raw=true)
+_TinyApp stores all your short URLs in one place._
 
 !["You also can edit or delete any URL that you've created."](https://github.com/paigenelmes/tinyapp/blob/main/docs/tinyapp-edit-URL.png?raw=true)
+_You also can edit or delete any URL that you've created._
 
 !["TinyApp is responsive! No matter how big or small your browser window is, the app will look great."](https://github.com/paigenelmes/tinyapp/blob/main/docs/tinyapp-responsive.png?raw=true)
-
+_TinyApp is responsive! No matter how big or small your browser window is, the app will look great._
 
 ## Dependencies
 
