@@ -7,7 +7,7 @@ const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
-const getUserByEmail = require("./helpers");
+const {getUserByEmail, urlsForUser, generateRandomString} = require("./helpers");
 
 //////////////////////////////
 //////// MIDDLEWARE /////////
@@ -47,33 +47,6 @@ const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "2LOihj" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "jS3PuW" }
 };
-
-///////////////////////////////////
-//////// HELPER FUNCTIONS ////////
-/////////////////////////////////
-
-//Generate random 6-character string function
-const generateRandomString = function() {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let randomStr = "";
-  for (let i = 6; i > 0; i--) {
-    randomStr += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return randomStr;
-};
-
-//Function the returns the URLs created by the logged-in user if the IDs are a match
-const urlsForUser = function(id, urlDatabase) {
-  let userURLs = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userURLs[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userURLs;
-};
-
-
 
 /////////////////////////////////////////////////////
 //////// MAIN URLS PAGE & CREATING NEW URLS ////////
