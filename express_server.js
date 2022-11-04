@@ -7,7 +7,7 @@ const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
-const {getUserByEmail, urlsForUser, generateRandomString} = require("./helpers");
+const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 
 //////////////////////////////
 //////// MIDDLEWARE /////////
