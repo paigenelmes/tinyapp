@@ -4,7 +4,7 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
-const cookieSession = require('cookie-session');
+// const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
 
@@ -15,11 +15,11 @@ const PORT = 8080;
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieSession({
-  name: "session",
-  keys: "f674588b-0384-4b99-abb4-9a28d7da097c",
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
+// app.use(cookieSession({
+//   name: "session",
+//   keys: "f674588b-0384-4b99-abb4-9a28d7da097c",
+//   maxAge: 24 * 60 * 60 * 1000 // 24 hours
+// }));
 app.set("view engine", "ejs");
 
 ////////////////////////////
@@ -160,7 +160,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 //Rendering the template vars into the login page
 //If the user is logged in already, redirect to urls page
 app.get("/login", (req, res) => {
-  if (req.session) {
+  if (req.cookies["userID"]) {
     res.redirect("/urls");
   } else {
     const id = req.cookies["userID"];
@@ -209,7 +209,7 @@ app.post("/logout", (req, res) => {
 
 //Render the templates vars to the user registration page
 app.get("/register", (req, res) => {
-  if (req.session) {
+  if (req.cookies["userID"]) {
     res.redirect("/urls");
   } else {
     const id = req.cookies["userID"];
