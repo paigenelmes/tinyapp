@@ -7,6 +7,7 @@ const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
+const getUserByEmail = require("./helpers");
 
 //////////////////////////////
 //////// MIDDLEWARE /////////
@@ -59,16 +60,6 @@ const generateRandomString = function() {
     randomStr += chars[Math.floor(Math.random() * chars.length)];
   }
   return randomStr;
-};
-
-//Get user by email function: If email is found, return user object. If not, return null
-const getUserByEmail = function(email) {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
 };
 
 //Function the returns the URLs created by the logged-in user if the IDs are a match
@@ -245,7 +236,7 @@ app.post("/login", (req, res) => {
   if (!email || !password) {
     return res.status(401).send("Error: Please enter an email address and a password.");
   }
-  const existingUser = getUserByEmail(email);
+  const existingUser = getUserByEmail(email, users);
   if (!existingUser) {
     return res.status(401).send(`Error: A user with the email address ${email} does not exist. Try again.`);
   }
@@ -294,7 +285,7 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) {
     return res.status(401).send("Error: Please enter an email address and a password.");
-  } else if (getUserByEmail(email)) {
+  } else if (getUserByEmail(email, users)) {
     return res.status(401).send(`Error: A user with the email address ${email} already exists.`);
   }
 
