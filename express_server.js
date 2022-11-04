@@ -18,9 +18,7 @@ app.use(cookieSession({
   name: "session",
   keys: ["bc7b77a4-a1fd-4844-a820-55ea304de51b", "d2bd3ccd-2038-477f-a7b2-6cf56849046b"],
   maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 24 hours
-
 }));
-
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -78,6 +76,16 @@ app.get("/urls", (req, res) => {
     };
 
     res.render("urls_index", templateVars);
+  }
+});
+
+/*Routes for "/": If user is logged in, redirect to /urls
+If user is not logged in, redireft to /login*/
+app.get("/", (req, res) => {
+  if (!req.session["userID"]) {
+    res.redirect("/login");
+  } else {
+    res.redirect("/urls");
   }
 });
 
