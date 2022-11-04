@@ -3,7 +3,7 @@
 ////////////////////////////
 
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
@@ -13,7 +13,13 @@ const PORT = 8080;
 ////////////////////////////
 
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ["bc7b77a4-a1fd-4844-a820-55ea304de51b", "d2bd3ccd-2038-477f-a7b2-6cf56849046b"],
+  maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 24 hours
+
+}));
+
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -96,10 +102,10 @@ app.get("/urls.json", (req, res) => {
 Display an error if the user is not logged in
 If the user is logged in, display all the URLs that they have created*/
 app.get("/urls", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session["userID"]) {
     return res.status(403).send("Error: Sorry, you must be logged in to see your URLs.");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["userID"];
     const user = users[id];
     const userURLs = urlsForUser(id, urlDatabase);
     const templateVars = {
@@ -113,10 +119,10 @@ app.get("/urls", (req, res) => {
 
 //Rendering new URLs. If not logged in, redirect to login page
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session["userID"]) {
     res.redirect("/login");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["userID"];
     const user = users[id];
     const templateVars = {
       id: req.params.id,
@@ -131,7 +137,7 @@ Display an error if user is not logged in
 Display an error if the Short URL ID isn't in the database
 Display an error message if the user does not own the URL */
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["userID"];
+  const userID = req.session["userID"];
   const user = users[userID];
   const userURLs = urlsForUser(userID, urlDatabase);
   if (!userID) {
@@ -156,14 +162,14 @@ app.get("/urls/:id", (req, res) => {
 /*Save new URL to URL Database & redirect to short URL page. Generate URL w/ helper function
 /If user is not logged in, display an error message*/
 app.post("/urls", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session["userID"]) {
     return res.status(403).send("Error: Sorry, only registered users can create new URLs. Please login or register.");
   } else {
     const shortURL = generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[shortURL] = {
       longURL: longURL,
-      userID: req.cookies["userID"]
+      userID: req.session["userID"]
     };
     res.redirect(`/urls/${shortURL}`);
   }
@@ -183,7 +189,7 @@ app.get("/u/:shortURL", (req, res) => {
 /*Delete URL when delete button is pressed, then redirect back to /urls page
 Display an error if the user does not own the URL*/
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userID = req.cookies["userID"];
+  const userID = req.session["userID"];
   if (!userID) {
     return res.status(403).send("Error: Sorry, you are not authorized to delete this URL.");
   } else {
@@ -196,7 +202,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 /*Edit URL when edit button is pressed, then redirect back to /urls page
 Display an error if the user does not own the URL*/
 app.post("/urls/:shortURL/edit", (req, res) => {
-  const userID = req.cookies["userID"];
+  const userID = req.session["userID"];
   if (!userID) {
     return res.status(403).send("Error: Sorry, you are not authorized to delete this URL.");
   } else {
@@ -213,10 +219,10 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 //Rendering the template vars into the login page
 //If the user is logged in already, redirect to urls page
 app.get("/login", (req, res) => {
-  if (req.cookies["userID"]) {
+  if (req.session["userID"]) {
     res.redirect("/urls");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["userID"];
     const user = users[id];
     const templateVars = {
       urls: urlDatabase,
@@ -247,14 +253,13 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(existingPass, hashPassword)) {
     return res.status(401).send("Error: Incorrect password. Try again.");
   }
-  res.cookie("userID", existingUser.id);
+  req.session.userID = existingUser.id;
   res.redirect("/urls");
 });
 
 //After user logs out, clear userID cookie and redirect back to /urls
 app.post("/logout", (req, res) => {
-  const userID = req.body.id;
-  res.clearCookie("userID", userID);
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -265,10 +270,10 @@ app.post("/logout", (req, res) => {
 /*Render the templates vars to the user registration page
 If logged in, redirect to URLs page*/
 app.get("/register", (req, res) => {
-  if (req.cookies["userID"]) {
+  if (req.session["userID"]) {
     res.redirect("/urls");
   } else {
-    const id = req.cookies["userID"];
+    const id = req.session["userID"];
     const user = users[id];
     const templateVars = {
       urls: urlDatabase,
@@ -299,6 +304,6 @@ app.post("/register", (req, res) => {
     password: hashPassword
   };
 
-  res.cookie("userID", userID);
+  req.session.userID = userID;
   res.redirect("/urls");
 });
