@@ -22,12 +22,12 @@ app.set("view engine", "ejs");
 
 //Users Database
 const users = {
-  userRandomID: {
+  "2LOihj": {
     id: "2LOihj",
     email: "user@example.com",
     password: "123",
   },
-  user2RandomID: {
+  "jS3PuW": {
     id: "jS3PuW",
     email: "user2@example.com",
     password: "abc",
@@ -133,7 +133,6 @@ app.get("/urls/:id", (req, res) => {
   const userID = req.cookies["userID"];
   const user = users[userID];
   const userURLs = urlsForUser(userID, urlDatabase);
-
   if (!userID) {
     res.status(403).send("Error: Sorry, this page is not accessible. Please login first.");
 
@@ -162,7 +161,8 @@ app.post("/urls", (req, res) => {
     const shortURL = generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[shortURL] = {
-      longURL: longURL
+      longURL: longURL,
+      userID: req.cookies["userID"]
     };
     res.redirect(`/urls/${shortURL}`);
   }
