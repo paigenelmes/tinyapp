@@ -4,7 +4,6 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
-// const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
 
@@ -15,11 +14,6 @@ const PORT = 8080;
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookieSession({
-//   name: "session",
-//   keys: "f674588b-0384-4b99-abb4-9a28d7da097c",
-//   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-// }));
 app.set("view engine", "ejs");
 
 ////////////////////////////
@@ -95,37 +89,52 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//Rendering new URLs
+//Rendering new URLs. If not logged in, redirect to login page
 app.get("/urls/new", (req, res) => {
-  const id = req.cookies["userID"];
-  const user = users[id];
-  const templateVars = {
-    id: req.params.id,
-    user
-  };
-  res.render("urls_new", templateVars);
+  if (!req.cookies["userID"]) {
+    res.redirect("/login");
+  } else {
+    const id = req.cookies["userID"];
+    const user = users[id];
+    const templateVars = {
+      id: req.params.id,
+      user
+    };
+    res.render("urls_new", templateVars);
+  }
 });
 
-//Rendering template vars into /urls/:id page
+/*Rendering template vars into /urls/:id page
+If the Short URL ID isn't in the database, display an error*/
 app.get("/urls/:id", (req, res) => {
-  const id = req.cookies["userID"];
-  const user = users[id];
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user
-  };
-  res.render("urls_show", templateVars);
+  if (urlDatabase[req.params.id]) {
+    const id = req.cookies["userID"];
+    const user = users[id];
+    const templateVars = {
+      id: req.params.id,
+      longURL: urlDatabase[req.params.id].longURL,
+      user
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(400).send("Error: Sorry, this URL does not exist. Try again.");
+  }
+  
 });
 
-//Save new URL to URL Database & redirect to short URL page. Generate URL w/ helper function
+/*Save new URL to URL Database & redirect to short URL page. Generate URL w/ helper function
+/If user is not logged in, display an error message*/
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = {
-    longURL: longURL
-  };
-  res.redirect(`/urls/${shortURL}`);
+  if (!req.cookies["userID"]) {
+    res.status(400).send("Error: Sorry, only registered users can create new URLs. Please login or register.");
+  } else {
+    const shortURL = generateRandomString();
+    const longURL = req.body.longURL;
+    urlDatabase[shortURL] = {
+      longURL: longURL
+    };
+    res.redirect(`/urls/${shortURL}`);
+  }
 });
 
 //Redirect any reqeust to /u/short URL to its long URL
