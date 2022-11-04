@@ -4,6 +4,7 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
 
@@ -14,6 +15,11 @@ const PORT = 8080;
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: "session",
+  keys: "f674588b-0384-4b99-abb4-9a28d7da097c",
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 app.set("view engine", "ejs");
 
 ////////////////////////////
@@ -152,14 +158,19 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 /////////////////////////////////
 
 //Rendering the template vars into the login page
+//If the user is logged in already, redirect to urls page
 app.get("/login", (req, res) => {
-  const id = req.cookies["userID"];
-  const user = users[id];
-  const templateVars = {
-    urls: urlDatabase,
-    user
-  };
-  res.render("login", templateVars);
+  if (req.session) {
+    res.redirect("/urls");
+  } else {
+    const id = req.cookies["userID"];
+    const user = users[id];
+    const templateVars = {
+      urls: urlDatabase,
+      user
+    };
+    res.render("login", templateVars);
+  }
 });
 
 /*After user logs in, set a userID cookie and redirect back to /urls
@@ -174,7 +185,6 @@ app.post("/login", (req, res) => {
     return res.status(400).send("Error: Please enter an email address and a password.");
   }
   const existingUser = getUserByEmail(email);
-
   if (!existingUser) {
     return res.status(400).send(`Error: A user with the email address ${email} does not exist. Try again.`);
   }
@@ -182,7 +192,6 @@ app.post("/login", (req, res) => {
   if (password !== existingPass) {
     return res.status(400).send("Error: Incorrect password. Try again.");
   }
-
   res.cookie("userID", existingUser.id);
   res.redirect("/urls");
 });
@@ -200,13 +209,17 @@ app.post("/logout", (req, res) => {
 
 //Render the templates vars to the user registration page
 app.get("/register", (req, res) => {
-  const id = req.cookies["userID"];
-  const user = users[id];
-  const templateVars = {
-    urls: urlDatabase,
-    user
-  };
-  res.render("register", templateVars);
+  if (req.session) {
+    res.redirect("/urls");
+  } else {
+    const id = req.cookies["userID"];
+    const user = users[id];
+    const templateVars = {
+      urls: urlDatabase,
+      user
+    };
+    res.render("register", templateVars);
+  }
 });
 
 /* Save new users to User Database, generate a userID, set cookies & redirect to main urls page
