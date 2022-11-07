@@ -135,7 +135,6 @@ app.post("/urls", (req, res) => {
 
 //Redirect any reqeust to /u/short URL to its long URL
 //Display an error if the short URL does not exist
-//Problem area: redirects to long URL ok, but does not display error message when URL doesn't exist
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL]) {
