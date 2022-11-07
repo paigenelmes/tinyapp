@@ -27,24 +27,10 @@ app.set("view engine", "ejs");
 //////////////////////////
 
 //Users Database
-const users = {
-  "2LOihj": {
-    id: "2LOihj",
-    email: "user@example.com",
-    password: "123",
-  },
-  "jS3PuW": {
-    id: "jS3PuW",
-    email: "user2@example.com",
-    password: "abc",
-  },
-};
+const users = {};
 
 //URL Database
-const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "2LOihj" },
-  "9sm5xK": { longURL: "http://www.google.com", userID: "jS3PuW" }
-};
+const urlDatabase = {};
 
 /////////////////////////////////////////////////////
 //////// MAIN URLS PAGE & CREATING NEW URLS ////////
@@ -148,10 +134,16 @@ app.post("/urls", (req, res) => {
 });
 
 //Redirect any reqeust to /u/short URL to its long URL
+//Display an error if the short URL does not exist
+//Problem area: redirects to long URL ok, but does not display error message when URL doesn't exist
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  res.redirect(longURL);
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL].longURL;
+    res.redirect(longURL);
+  } else {
+    return res.status(404).send("Error: Sorry, this URL does not exist. Try again.");
+  }
 });
 
 //////////////////////////////////////////
@@ -208,11 +200,9 @@ app.get("/login", (req, res) => {
 Display error if email & password are empty or if user email doesn't exist
 Only check for for the existing password if the return value of function call is not null/undefined
 Display error if email does exist but the password doesn't match the one in the database*/
-
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const hashPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password) {
     return res.status(401).send("Error: Please enter an email address and a password.");
@@ -222,7 +212,7 @@ app.post("/login", (req, res) => {
     return res.status(401).send(`Error: A user with the email address ${email} does not exist. Try again.`);
   }
   const existingPass = existingUser.password;
-  if (!bcrypt.compareSync(existingPass, hashPassword)) {
+  if (!bcrypt.compareSync(password, existingPass)) {
     return res.status(401).send("Error: Incorrect password. Try again.");
   }
   req.session.userID = existingUser.id;
@@ -263,10 +253,12 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const hashPassword = bcrypt.hashSync(password, 10);
+  const existingUser = getUserByEmail(email, users);
+
 
   if (!email || !password) {
     return res.status(401).send("Error: Please enter an email address and a password.");
-  } else if (getUserByEmail(email, users)) {
+  } else if (existingUser) {
     return res.status(401).send(`Error: A user with the email address ${email} already exists.`);
   }
 
